@@ -27,8 +27,9 @@
 #### 4. ArgoCD Installation
 - ✅ ArgoCD namespace created
 - ✅ ArgoCD components installed
-- ❌ **ISSUE**: ArgoCD pods having problems (Pending/Completed/ContainerStatusUnknown)
-- 🔧 **SOLUTION**: Reinstall ArgoCD with proper troubleshooting steps
+- ✅ **DISK ISSUE RESOLVED**: Freed 3.1GB of space (90% → 83% usage)
+- ✅ **TAINT REMOVED**: Kubernetes can schedule pods again
+- 🔄 **STATUS**: ArgoCD pods initializing properly
 
 ### 🔄 CURRENT STATUS
 From your terminal output, I can see:
@@ -36,12 +37,24 @@ From your terminal output, I can see:
 - **ArgoCD**: All pods are Running (1/1 Ready)
 - **System is ready** for the next steps!
 
-### 🔄 CURRENT ISSUE
-ArgoCD pods are having issues:
-- Some pods in `Pending` state
-- Some pods in `Completed` state (should be Running)
-- Server pods in `ContainerStatusUnknown` state
-- Need to troubleshoot ArgoCD installation
+### 🔄 DISK SPACE ISSUE RESOLVED
+**Problem**: Disk was 90% full causing Kubernetes disk-pressure taint
+**Root Cause**: System logs accumulated over time (3.1GB of old logs)
+**Solution Applied**:
+```bash
+# Check disk usage
+df -h /
+
+# Clean system logs (freed 3.1GB)
+sudo journalctl --vacuum-time=1d
+
+# Remove disk-pressure taint manually
+kubectl taint nodes mily node.kubernetes.io/disk-pressure:NoSchedule-
+
+# Verify space freed
+df -h /  # Now 83% usage with 7.5GB free
+```
+**Result**: ArgoCD pods can now be scheduled properly
 
 ### 🎯 NEXT STEPS
 
@@ -92,6 +105,23 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 - Watch pipeline execution
 - Validate deployment
 - Test rollback functionality
+
+### � RCOMMON ISSUES AND SOLUTIONS
+
+#### Disk Pressure Issue
+**Symptoms**: Pods stuck in `Pending` state, `disk-pressure` taint on nodes
+**Diagnosis**:
+```bash
+df -h /                                    # Check disk usage
+kubectl describe node | grep -i taint     # Check node taints
+kubectl describe pod <pod-name>           # Check scheduling issues
+```
+**Solution**:
+```bash
+sudo journalctl --vacuum-time=1d          # Clean old logs
+sudo apt clean && sudo apt autoremove -y  # Clean package cache
+kubectl taint nodes <node> node.kubernetes.io/disk-pressure:NoSchedule-  # Remove taint
+```
 
 ### 📝 RECOVERY COMMANDS (if IDE restarts)
 ```bash

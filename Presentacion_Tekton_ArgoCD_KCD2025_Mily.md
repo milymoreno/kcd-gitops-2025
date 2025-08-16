@@ -161,8 +161,27 @@ kubectl wait --for=condition=Ready pod --all -n argocd --timeout=300s
 - 🔔 **Notifications Controller** - Notificaciones
 
 ⚠️ **Troubleshooting ArgoCD:**
+
+**Problema común: Disk Pressure**
 ```bash
-# Si ArgoCD tiene problemas, reinstalar:
+# Verificar espacio en disco
+df -h /
+
+# Si está >85% lleno, limpiar logs del sistema
+sudo journalctl --vacuum-time=1d
+
+# Limpiar cache de apt
+sudo apt clean && sudo apt autoremove -y
+
+# Verificar taints del nodo
+kubectl describe node | grep -i taint
+
+# Remover taint de disk-pressure si es necesario
+kubectl taint nodes <node-name> node.kubernetes.io/disk-pressure:NoSchedule-
+```
+
+**Si ArgoCD sigue con problemas, reinstalar:**
+```bash
 kubectl delete namespace argocd
 kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
