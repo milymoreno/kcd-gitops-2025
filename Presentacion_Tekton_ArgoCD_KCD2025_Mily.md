@@ -160,6 +160,22 @@ kubectl wait --for=condition=Ready pod --all -n argocd --timeout=300s
 - 📊 **Redis** - Cache y estado
 - 🔔 **Notifications Controller** - Notificaciones
 
+⚠️ **Troubleshooting ArgoCD:**
+```bash
+# Si ArgoCD tiene problemas, reinstalar:
+kubectl delete namespace argocd
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Obtener contraseña admin (versiones recientes):
+kubectl -n argocd get pods -l app.kubernetes.io/name=argocd-server -o jsonpath='{.items[0].metadata.name}'
+
+# Acceder al dashboard:
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Usuario: admin
+# Contraseña: nombre del pod del servidor
+```
+
 ---
 
 ## 🔎 Notas clave para esta slide:
