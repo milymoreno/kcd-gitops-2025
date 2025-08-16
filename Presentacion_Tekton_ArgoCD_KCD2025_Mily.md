@@ -65,32 +65,100 @@ Todo será sobre un clúster **on-premise con K3s**, ideal para empresas que bus
 ## ⚙️ Instalación de Kubernetes con K3s
 
 ```bash
+listo sigue cio# Instalar K3s
 curl -sfL https://get.k3s.io | sh -
-export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+# Crear directorio para kubectl config
+mkdir -p ~/.kube
+
+# Copiar configuración de K3s
+sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
+
+# Ajustar permisos
+sudo chown $USER:$USER ~/.kube/config
+chmod 600 ~/.kube/config
+
+# Verificar instalación
+kubectl get nodes
+
+# Verificar que todos los pods del sistema estén funcionando
+kubectl get pods -A
 ```
 
 ✅ K3s es una distribución ligera de Kubernetes  
 🎯 Ideal para entornos de laboratorio y servidores físicos
 
-📌 Tip: asegúrate de tener permisos `sudo`
+📌 **Tips importantes:**
+
+- Asegúrate de tener permisos `sudo`
+- El servicio se inicia automáticamente
+- La configuración se guarda en `~/.kube/config`
+
+🔍 **Conectar con Lens:**
+
+1. Abrir Lens IDE
+2. Ir a "Add Cluster"
+3. Seleccionar "From kubeconfig"
+4. Lens detectará automáticamente `~/.kube/config`
+5. ¡Listo! Ya puedes administrar tu cluster visualmente
 
 ---
 
 ## ⚙️ Instalación de Tekton
 
 ```bash
+# Instalar Tekton Pipelines
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+
+# Instalar Tekton Triggers
 kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+
+# Verificar instalación de Tekton
+kubectl get pods -n tekton-pipelines
+
+# Esperar a que todos los pods estén Running
+kubectl wait --for=condition=Ready pod --all -n tekton-pipelines --timeout=300s
 ```
+
+✅ **Componentes instalados:**
+
+- 🧩 **Tekton Pipelines** - Motor de CI/CD
+- 🔔 **Tekton Triggers** - Webhooks y eventos
+- 🎛️ **Controllers** - Gestión de recursos
+- 🌐 **Webhooks** - Validación y mutación
+
+📌 **Verificación exitosa:**
+
+- Namespace `tekton-pipelines` creado
+- Todos los CRDs (Custom Resource Definitions) instalados
+- Controllers y webhooks funcionando
 
 ---
 
 ## 🚀 Instalación de ArgoCD
 
 ```bash
+# Crear namespace para ArgoCD
 kubectl create namespace argocd
+
+# Instalar ArgoCD
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Verificar instalación
+kubectl get pods -n argocd
+
+# Esperar a que ArgoCD esté listo
+kubectl wait --for=condition=Ready pod --all -n argocd --timeout=300s
 ```
+
+✅ **Componentes de ArgoCD instalados:**
+
+- 🎛️ **Application Controller** - Gestiona aplicaciones
+- 🌐 **Server** - API y UI web
+- 📦 **Repo Server** - Gestiona repositorios Git
+- 🔐 **Dex Server** - Autenticación
+- 📊 **Redis** - Cache y estado
+- 🔔 **Notifications Controller** - Notificaciones
 
 ---
 
