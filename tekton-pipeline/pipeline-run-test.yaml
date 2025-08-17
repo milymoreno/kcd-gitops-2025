@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: java-ci-cd-pipeline-run-002
+  namespace: default
+spec:
+  pipelineRef:
+    name: java-ci-cd-pipeline
+  params:
+    - name: repo-url
+      value: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      value: main
+    - name: app-name
+      value: kcd-demo-app
+    - name: environment
+      value: development
+  workspaces:
+    - name: shared-data
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi

@@ -1,0 +1,65 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: java-ci-cd-pipeline
+  namespace: default
+spec:
+  description: Complete CI/CD pipeline for Java application
+  params:
+    - name: repo-url
+      type: string
+      description: The git repository URL to clone from
+      default: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      type: string
+      description: The git revision to clone
+      default: main
+    - name: app-name
+      type: string
+      description: Application name
+      default: demo-java-app
+    - name: environment
+      type: string
+      description: Target environment
+      default: development
+  workspaces:
+    - name: shared-data
+      description: Shared workspace for pipeline tasks
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+    
+    - name: build-artifact
+      taskRef:
+        name: maven-build-java-artifact-from-source
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: GOALS
+          value: "clean compile test package"
+      runAfter:
+        - fetch-source
+    
+    - name: deploy-app
+      taskRef:
+        name: deploy-artifact-to-ibm-cloud-functions
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: APP_NAME
+          value: $(params.app-name)
+        - name: ENVIRONMENT
+          value: $(params.environment)
+      runAfter:
+        - build-artifact

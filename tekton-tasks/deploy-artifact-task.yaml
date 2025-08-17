@@ -1,0 +1,92 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy-artifact-to-ibm-cloud-functions
+  namespace: default
+spec:
+  description: Deploy artifact to a service (simulated deployment)
+  params:
+    - name: APP_NAME
+      description: Application name
+      type: string
+      default: demo-app
+    - name: ENVIRONMENT
+      description: Target environment
+      type: string
+      default: development
+  workspaces:
+    - name: source
+      description: The workspace containing the built artifacts
+  steps:
+    - name: deploy
+      image: alpine:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/sh
+        set -e
+        
+        echo "Starting deployment simulation..."
+        echo "App Name: $(params.APP_NAME)"
+        echo "Environment: $(params.ENVIRONMENT)"
+        echo "Working directory: $(pwd)"
+        
+        # Find JAR files
+        JAR_FILES=$(find . -name "*.jar" -type f | head -5)
+        
+        if [ -z "$JAR_FILES" ]; then
+          echo "No JAR files found to deploy"
+          exit 1
+        fi
+        
+        echo "Found artifacts to deploy:"
+        echo "$JAR_FILES"
+        
+        # Simulate deployment process
+        echo "Simulating deployment to IBM Cloud Functions..."
+        sleep 2
+        
+        echo "✅ Deployment simulation completed successfully!"
+        echo "📦 Application $(params.APP_NAME) deployed to $(params.ENVIRONMENT)"
+        echo "🌐 Service URL: https://$(params.APP_NAME)-$(params.ENVIRONMENT).example.com"
+        
+        # Create deployment manifest for ArgoCD
+        mkdir -p k8s-manifests
+        cat > k8s-manifests/deployment.yaml << EOF
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: $(params.APP_NAME)
+          labels:
+            app: $(params.APP_NAME)
+        spec:
+          replicas: 1
+          selector:
+            matchLabels:
+              app: $(params.APP_NAME)
+          template:
+            metadata:
+              labels:
+                app: $(params.APP_NAME)
+            spec:
+              containers:
+              - name: $(params.APP_NAME)
+                image: openjdk:11-jre-slim
+                command: ["java", "-jar", "/app/app.jar"]
+                ports:
+                - containerPort: 8080
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: $(params.APP_NAME)-service
+        spec:
+          selector:
+            app: $(params.APP_NAME)
+          ports:
+          - port: 80
+            targetPort: 8080
+          type: ClusterIP
+        EOF
+        
+        echo "📄 Kubernetes manifests created for ArgoCD"
+        ls -la k8s-manifests/

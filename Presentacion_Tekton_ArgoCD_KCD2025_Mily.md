@@ -62,7 +62,9 @@ Todo será sobre un clúster **on-premise con K3s**, ideal para empresas que bus
 
 ---
 
-## ⚙️ Instalación de Kubernetes con K3s
+## ⚙️ Instalación de Kubernetes
+
+### 🚀 Opción 1: K3s (Recomendado para servidores)
 
 ```bash
 listo sigue cio# Instalar K3s
@@ -93,6 +95,35 @@ kubectl get pods -A
 - Asegúrate de tener permisos `sudo`
 - El servicio se inicia automáticamente
 - La configuración se guarda en `~/.kube/config`
+
+### 🖥️ Opción 2: Minikube (Alternativa para desarrollo)
+
+```bash
+# Instalar Minikube
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Iniciar cluster con recursos suficientes
+minikube start --memory=4096 --cpus=2 --disk-size=20g
+
+# Verificar instalación
+kubectl get nodes
+
+# Verificar pods del sistema
+kubectl get pods -A
+
+# Habilitar dashboard (opcional)
+minikube dashboard --url
+```
+
+✅ **K3s**: Ligero, ideal para servidores físicos y producción  
+✅ **Minikube**: Fácil setup, ideal para desarrollo y laptops
+
+📌 **Tips importantes:**
+
+- **K3s**: Requiere permisos `sudo`, se inicia automáticamente
+- **Minikube**: Usa Docker/VirtualBox, fácil de resetear
+- Ambos usan `~/.kube/config` para kubectl
 
 🔍 **Conectar con Lens:**
 
@@ -187,7 +218,7 @@ kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 # Obtener contraseña admin (versiones recientes):
-kubectl -n argocd get pods -l app.kubernetes.io/name=argocd-server -o jsonpath='{.items[0].metadata.name}'
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
 # Acceder al dashboard:
 kubectl port-forward svc/argocd-server -n argocd 8080:443
@@ -214,6 +245,21 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 🔄 **git-clone**: clona el código desde GitHub  
 ⚙️ **maven-build-java-artifact-from-source**: compila el artefacto Java  
 🚀 **deploy-artifact-to-ibm-cloud-functions**: despliega a un servicio
+
+```bash
+# Crear las tasks de Tekton
+kubectl apply -f tekton-tasks/git-clone-task.yaml
+kubectl apply -f tekton-tasks/maven-build-task.yaml  
+kubectl apply -f tekton-tasks/deploy-artifact-task.yaml
+
+# Verificar que las tasks se crearon
+kubectl get tasks
+```
+
+📁 **Archivos creados:**
+- `tekton-tasks/git-clone-task.yaml` - Clona repositorio Git
+- `tekton-tasks/maven-build-task.yaml` - Compila con Maven
+- `tekton-tasks/deploy-artifact-task.yaml` - Simula despliegue y crea manifiestos K8s
 
 ---
 

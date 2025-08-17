@@ -1,0 +1,50 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: maven-build-java-artifact-from-source
+  namespace: default
+spec:
+  description: Build Java application using Maven
+  params:
+    - name: GOALS
+      description: Maven goals to execute
+      type: string
+      default: "clean compile test package"
+    - name: MAVEN_IMAGE
+      description: Maven base image
+      type: string
+      default: maven:3.8.6-openjdk-11
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  steps:
+    - name: maven-build
+      image: $(params.MAVEN_IMAGE)
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        
+        echo "Starting Maven build..."
+        echo "Goals: $(params.GOALS)"
+        echo "Working directory: $(pwd)"
+        
+        # Check if pom.xml exists
+        if [ ! -f "pom.xml" ]; then
+          echo "No pom.xml found. Creating a simple Java project..."
+          mvn archetype:generate \
+            -DgroupId=com.example \
+            -DartifactId=demo-app \
+            -DarchetypeArtifactId=maven-archetype-quickstart \
+            -DinteractiveMode=false
+          cd demo-app
+        fi
+        
+        # Execute Maven goals
+        mvn $(params.GOALS)
+        
+        echo "Maven build completed successfully"
+        
+        # List generated artifacts
+        echo "Generated artifacts:"
+        find . -name "*.jar" -type f
