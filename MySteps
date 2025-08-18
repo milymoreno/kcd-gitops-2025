@@ -1,0 +1,80 @@
+Command
+curl -sfL https://get.k3s.io | sh -
+
+export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+
+¡Perfecto! ArgoCD está disponible en https://localhost:8080
+
+Credenciales:
+
+Usuario: admin
+Contraseña: WeNiKsLkgNQRT-wm
+
+kubectl get pods -n default 
+
+kubectl describe pod hello-tekton-5bd65df746-nzz76 -n default
+
+Crear el Cluste con Minikube
+minikube start -p kcd --driver=docker --cpus=2 --memory=4096 --disk-size=20g --wait=all 
+
+Verificar Nodo del Cluster
+kubectl get nodes --context kcd
+
+
+Fijar el contexto
+kubectl config use-context kcd
+
+Validar si ,o tomaÑ
+kubectl config current-context
+
+
+
+Instlar tekton en el kluster
+
+kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
+
+kubectl get pods -n tekton-pipelines
+
+kubectl wait --for=condition=Ready pod --all -n tekton-pipelines --timeout=300s
+
+Instalar Tekton Trigers
+
+kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
+
+kubectl get pods -n tekton-pipelines
+
+
+watch kubectl get pods -n tekton-pipelines
+
+
+kubectl config current-context
+
+Instalar ArgoCD
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+MonitorerÑ
+kubectl get pods -n argocd -w
+
+Obtener la contrseña de ArgoCd
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+
+
+watch kubectl get pods -n argocd
+
+Redireccionar argo
+
+kubectl port-forward -n argocd svc/argocd-server 8080:443
+
+Par saber donde esta el kube config
+
+kubectl config view --minify --raw --flatten > ~/Descargas/kubeconfig_minikube-test
+
+para obterne la url del ingress
+minikube -p kcd service ingress-nginx-controller -n ingress-nginx --url
+
+http://127.0.0.1:40943
+http://127.0.0.1:45903
