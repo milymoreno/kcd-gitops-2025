@@ -78,3 +78,9 @@ minikube -p kcd service ingress-nginx-controller -n ingress-nginx --url
 
 http://127.0.0.1:40943
 http://127.0.0.1:45903
+
+sudo -E env MINIKUBE_HOME="$HOME/.minikube" minikube -p kcd tunnel
+
+
+kubectl -n default port-forward svc/hello-tekton-service 18080:80
+
