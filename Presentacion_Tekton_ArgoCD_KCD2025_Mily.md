@@ -9,15 +9,17 @@
 
 ## 🎯 Objetivo del Taller
 
-En este workshop 100% práctico aprenderás a:
+En este workshop **100% práctico** aprenderás a:
 
-✅ Montar un entorno CI/CD declarativo desde cero  
-✅ Usar Tekton para construir pipelines modulares  
-✅ Integrar ArgoCD como solución GitOps  
-✅ Automatizar desde el Pull Request hasta el despliegue  
-✅ Aplicar rollback en caso de fallos con ArgoCD
+✅ **Montar un entorno CI/CD declarativo** desde cero  
+✅ **Usar Tekton** para construir pipelines modulares  
+✅ **Integrar ArgoCD** como solución GitOps  
+✅ **Automatizar desde el Pull Request** hasta el despliegue  
+✅ **Aplicar rollback** en caso de fallos con ArgoCD
 
 Todo será sobre un clúster **on-premise con K3s**, ideal para empresas que buscan **autonomía y control completo** sobre su infraestructura.
+
+🎯 **Al final tendrás**: Un pipeline CI/CD completo, funcional y listo para producción
 
 ---
 
@@ -39,26 +41,32 @@ Todo será sobre un clúster **on-premise con K3s**, ideal para empresas que bus
 
 ## 🛣️ Ruta del Taller: CI/CD paso a paso
 
+### 🏁 **Fase 1: Preparación**
 1️⃣ **Preparación del entorno**  
-🖥️ Ubuntu + Docker + Git + Helm + kubectl
+🖥️ Ubuntu + Docker + Git + Helm + kubectl + Lens
 
-2️⃣ **Instalación de K3s (Kubernetes)**  
-⚙️ Clúster local on-premise en minutos
+2️⃣ **Instalación de Kubernetes**  
+⚙️ K3s (producción) o Minikube (desarrollo)
 
-3️⃣ **Instalación de Tekton + ArgoCD**  
-🔧 Pipelines + GitOps sincronizado
+### 🔧 **Fase 2: Infraestructura**
+3️⃣ **Instalación de Tekton**  
+🧩 Pipelines + Triggers + Tasks
 
-4️⃣ **Creación de Tasks y Pipelines**  
-🧱 Paso a paso desde PR hasta despliegue
+4️⃣ **Instalación de ArgoCD**  
+🚀 GitOps + Dashboard + Sincronización
 
-5️⃣ **Integración GitHub → Tekton**  
-🔁 Trigger automático al hacer pull request
+### 🚀 **Fase 3: Implementación**
+5️⃣ **Creación de Tasks y Pipelines**  
+🧱 git-clone → maven-build → deploy
 
-6️⃣ **Despliegue GitOps con ArgoCD**  
-🚀 Validación + rollback con un clic
+6️⃣ **Configuración GitOps**  
+🔁 ArgoCD + Repositorio + Auto-sync
 
-7️⃣ **Demostración final**  
-✅ Aplicación Java lista desde cero
+### 🎯 **Fase 4: Demo en Vivo**
+7️⃣ **Pipeline en acción**  
+✅ PR → Build → Deploy → Rollback
+
+**⏱️ Duración total**: ~3 horas | **🎯 Nivel**: Intermedio | **💻 Formato**: Hands-on
 
 ---
 
@@ -67,7 +75,7 @@ Todo será sobre un clúster **on-premise con K3s**, ideal para empresas que bus
 ### 🚀 Opción 1: K3s (Recomendado para servidores)
 
 ```bash
-listo sigue cio# Instalar K3s
+# Instalar K3s
 curl -sfL https://get.k3s.io | sh -
 
 # Crear directorio para kubectl config
@@ -222,8 +230,9 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 # Acceder al dashboard:
 kubectl port-forward svc/argocd-server -n argocd 8080:443
+# Acceder a: https://localhost:8080
 # Usuario: admin
-# Contraseña: nombre del pod del servidor
+# Contraseña: (del comando anterior)
 ```
 
 ---
@@ -341,7 +350,7 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 ```
 
 🌐 **Ingresar al dashboard:**  
-http://localhost:8080
+https://localhost:8080
 
 🧷 **Registrar el repositorio Git**
 
