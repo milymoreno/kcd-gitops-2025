@@ -84,3 +84,17 @@ sudo -E env MINIKUBE_HOME="$HOME/.minikube" minikube -p kcd tunnel
 
 kubectl -n default port-forward svc/hello-tekton-service 18080:80
 
+kubectl -n default patch deploy hello-tekton --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"hashicorp/http-echo:0.2.3"},{"op":"replace","path":"/spec/template/spec/containers/0/command","value":["/http-echo"]},{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["-listen=:8080","-text=Hello from Tekton"]}]'
+
+
+kubectl get pods -n default -w
+kubectl logs -n default -l app=hello-tekton --tail=200 --timestamps
+
+
+kubectl patch deploy hello-tekton -n default --type='json' \
+-p='[
+  {"op":"replace","path":"/spec/template/spec/containers/0/command","value":["/http-echo"]},
+  {"op":"replace","path":"/spec/template/spec/containers/0/args","value":["-listen=:8080","-text=Hello from Tekton"]}
+]'
+
+kubectl -n default rollout restart deploy/hello-tekton
