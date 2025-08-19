@@ -98,3 +98,5 @@ kubectl patch deploy hello-tekton -n default --type='json' \
 ]'
 
 kubectl -n default rollout restart deploy/hello-tekton
+kubectl -n argocd annotate application kcd-demo-app argocd.argoproj.io/refresh=hard --overwrite
+
