@@ -1,0 +1,43 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: sonarqube-analysis
+spec:
+  description: Ejecuta análisis de calidad de código con SonarQube Scanner.
+  params:
+    - name: sonarqube-image
+      type: string
+      default: sonarsource/sonar-scanner-cli:latest
+    - name: project-key
+      type: string
+      description: Clave única del proyecto en SonarQube.
+    - name: project-name
+      type: string
+      description: Nombre del proyecto en SonarQube.
+    - name: project-version
+      type: string
+      description: Versión de la aplicación a analizar.
+    - name: sonar-host-url
+      type: string
+      description: URL de SonarQube (ej. http://sonarqube:9000).
+    - name: sonar-token
+      type: string
+      description: Token de autenticación de SonarQube.
+  workspaces:
+    - name: source
+      description: Código fuente de la aplicación (clonado previamente).
+  steps:
+    - name: sonar-scan
+      image: $(params.sonarqube-image)
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        echo ">> Running SonarQube analysis..."
+        sonar-scanner \
+          -Dsonar.projectKey=$(params.project-key) \
+          -Dsonar.projectName=$(params.project-name) \
+          -Dsonar.projectVersion=$(params.project-version) \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=$(params.sonar-host-url) \
+          -Dsonar.login=$(params.sonar-token)

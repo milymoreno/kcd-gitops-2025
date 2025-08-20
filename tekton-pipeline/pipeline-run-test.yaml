@@ -6,21 +6,85 @@ metadata:
 spec:
   pipelineRef:
     name: java-ci-cd-pipeline
+
   params:
+    # Repo y rama
     - name: repo-url
       value: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
     - name: revision
-      value: main
+      value: "main"
+
+    # Metadatos de la app (si tu Pipeline los usa)
     - name: app-name
-      value: kcd-demo-app
+      value: "kcd-demo-app"
     - name: environment
-      value: development
+      value: "development"
+
+    # SonarQube (ajusta a tu servidor/proyecto)
+    - name: sonar-host-url
+      value: "http://sonarqube:9000"
+    - name: sonar-token
+      value: "$(params-ocultos-o-secret)"         # si tu Pipeline lo toma de param
+    - name: project-key
+      value: "kcd-demo-app"
+    - name: project-name
+      value: "KCD Demo App"
+    - name: project-version
+      value: "pr-$(context.pipelineRun.name)"
+
+    # Build de imagen (Kaniko)
+    - name: image-url
+      value: "ghcr.io/milymoreno/kcd-demo-app:$(context.pipelineRun.name)"
+    - name: context
+      value: "."
+    - name: dockerfile
+      value: "./Dockerfile"
+    - name: build-args
+      value: ""                                     # ej: "--build-arg PROFILE=prod"
+    - name: insecure-registry
+      value: "false"
+    - name: skip-tls-verify
+      value: "false"
+
   workspaces:
     - name: shared-data
       volumeClaimTemplate:
         spec:
-          accessModes:
-            - ReadWriteOnce
+          accessModes: ["ReadWriteOnce"]
           resources:
             requests:
               storage: 1Gi
+    # Quita este bloque si NO usas dockerconfig en la Task
+    - name: dockerconfig
+      secret:
+        secretName: registry-creds
+        items:
+          - key: .dockerconfigjson
+            path: config.json
+
+# apiVersion: tekton.dev/v1beta1
+# kind: PipelineRun
+# metadata:
+#   name: java-ci-cd-pipeline-run-003
+#   namespace: default
+# spec:
+#   pipelineRef:
+#     name: java-ci-cd-pipeline
+#   params:
+#     - name: repo-url
+#       value: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+#     - name: revision
+#       value: main
+#     - name: app-name
+#       value: kcd-demo-app
+#     - name: environment
+#       value: development
+#   workspaces:
+#     - name: shared-data
+#       volumeClaimTemplate:
+#         spec:
+#           accessModes:
+#             - ReadWriteOnce
+#           resources:
+#             requests:
+#               storage: 1Gi

@@ -1,102 +1,50 @@
-Command
+# Runbook KCD – Kubernetes CI/CD (K3s + Tekton + ArgoCD + SonarQube) ✅
+
+> **Nota:** K3s es la opción principal por ligereza y rapidez. Minikube queda como alternativa opcional.
+
+---
+
+## 1) Crear clúster local con K3s
+```bash
+# Instalar K3s
 curl -sfL https://get.k3s.io | sh -
 
+# Usar kubeconfig de K3s
 export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
-kubectl port-forward svc/argocd-server -n argocd 8080:443
-
-
-¡Perfecto! ArgoCD está disponible en https://localhost:8080
-
-Credenciales:
-
-Usuario: admin
-Contraseña: WeNiKsLkgNQRT-wm
-
-kubectl get pods -n default 
-
-kubectl describe pod hello-tekton-5bd65df746-nzz76 -n default
-
-Crear el Cluste con Minikube
-minikube start -p kcd --driver=docker --cpus=2 --memory=4096 --disk-size=20g --wait=all 
-
-Verificar Nodo del Cluster
-kubectl get nodes --context kcd
-
-
-Fijar el contexto
-kubectl config use-context kcd
-
-Validar si ,o tomaÑ
+# Verifica contexto
 kubectl config current-context
+kubectl get nodes
 
 
+## 2) (Opcional) Crear clúster local con Minikube
 
-Instlar tekton en el kluster
+minikube start -p kcd --driver=docker --cpus=2 --memory=4096 --disk-size=20g --wait=all
+kubectl get nodes --context kcd
+kubectl config use-context kcd
+kubectl config current-context   # debe decir: kcd
 
+## 3) Instalar Tekton (Pipelines + Triggers)
+
+# Pipelines
 kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/latest/release.yaml
-
-kubectl get pods -n tekton-pipelines
-
 kubectl wait --for=condition=Ready pod --all -n tekton-pipelines --timeout=300s
 
-Instalar Tekton Trigers
-
+# Triggers
 kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/latest/release.yaml
-
-kubectl get pods -n tekton-pipelines
-
-
-watch kubectl get pods -n tekton-pipelines
+kubectl wait --for=condition=Ready pod --all -n tekton-pipelines --timeout=300s
 
 
-kubectl config current-context
+## 4) (Opcional) Crear clúster local con Minikube
 
-Instalar ArgoCD
-kubectl create namespace argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+## 5) (Opcional) Crear clúster local con Minikube
 
-MonitorerÑ
-kubectl get pods -n argocd -w
+## 6) (Opcional) Crear clúster local con Minikube
 
-Obtener la contrseña de ArgoCd
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
+## 7) (Opcional) Crear clúster local con Minikube
 
+## 9) (Opcional) Crear clúster local con Minikube
 
-watch kubectl get pods -n argocd
+## 10) (Opcional) Crear clúster local con Minikube
 
-Redireccionar argo
-
-kubectl port-forward -n argocd svc/argocd-server 8080:443
-
-Par saber donde esta el kube config
-
-kubectl config view --minify --raw --flatten > ~/Descargas/kubeconfig_minikube-test
-
-para obterne la url del ingress
-minikube -p kcd service ingress-nginx-controller -n ingress-nginx --url
-
-http://127.0.0.1:40943
-http://127.0.0.1:45903
-
-sudo -E env MINIKUBE_HOME="$HOME/.minikube" minikube -p kcd tunnel
-
-
-kubectl -n default port-forward svc/hello-tekton-service 18080:80
-
-kubectl -n default patch deploy hello-tekton --type='json' -p='[{"op":"replace","path":"/spec/template/spec/containers/0/image","value":"hashicorp/http-echo:0.2.3"},{"op":"replace","path":"/spec/template/spec/containers/0/command","value":["/http-echo"]},{"op":"replace","path":"/spec/template/spec/containers/0/args","value":["-listen=:8080","-text=Hello from Tekton"]}]'
-
-
-kubectl get pods -n default -w
-kubectl logs -n default -l app=hello-tekton --tail=200 --timestamps
-
-
-kubectl patch deploy hello-tekton -n default --type='json' \
--p='[
-  {"op":"replace","path":"/spec/template/spec/containers/0/command","value":["/http-echo"]},
-  {"op":"replace","path":"/spec/template/spec/containers/0/args","value":["-listen=:8080","-text=Hello from Tekton"]}
-]'
-
-kubectl -n default rollout restart deploy/hello-tekton
-kubectl -n argocd annotate application kcd-demo-app argocd.argoproj.io/refresh=hard --overwrite
-
+## 11) (Opcional) Crear clúster local con Minikube

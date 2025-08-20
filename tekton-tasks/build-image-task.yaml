@@ -1,0 +1,66 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-image
+spec:
+  description: Construye y publica la imagen con Kaniko (sin daemon Docker).
+  params:
+    - name: image-url
+      type: string
+      description: "Destino de la imagen (p. ej. ghcr.io/org/app:tag)"
+    - name: context
+      type: string
+      description: "Ruta del contexto de build relativa al workspace (p. ej. .)"
+    - name: dockerfile
+      type: string
+      description: "Ruta al Dockerfile (p. ej. ./Dockerfile)"
+    - name: build-args
+      type: string
+      description: "Cadena opcional con build args, ej: '--build-arg KEY=VAL --build-arg FOO=BAR'"
+    - name: insecure-registry
+      type: string
+      description: "true/false si el registry es inseguro"
+    - name: skip-tls-verify
+      type: string
+      description: "true/false para saltar validación TLS"
+  workspaces:
+    - name: source
+      description: Código fuente clonado previamente
+    - name: dockerconfig
+      description: "~/.docker/config.json para autenticación (opcional)"
+      optional: true
+  results:
+    - name: image-url
+      description: Imagen construida y publicada
+  steps:
+    - name: kaniko-build-and-push
+      image: gcr.io/kaniko-project/executor:latest
+      workingDir: $(workspaces.source.path)
+      command: ["/busybox/sh", "-ce"]
+      args:
+        - |
+          set -euo pipefail
+
+          DEST="$(params.image-url)"
+          CTX="$(workspaces.source.path)/$(params.context)"
+          DF="$(params.dockerfile)"
+          EXTRA_ARGS="$(params.build-args)"
+
+          echo ">> Building image ${DEST} from ${DF} (context: ${CTX})"
+          DOCKERCFG=""
+          if [ -n "$(workspaces.dockerconfig.path)" ] && [ -d "$(workspaces.dockerconfig.path)" ]; then
+            DOCKERCFG="--docker-config=$(workspaces.dockerconfig.path)"
+          fi
+
+          /kaniko/executor \
+            --context="${CTX}" \
+            --dockerfile="${DF}" \
+            --destination="${DEST}" \
+            --insecure-registry=$(params.insecure-registry) \
+            --skip-tls-verify=$(params.skip-tls-verify) \
+            ${DOCKERCFG} \
+            ${EXTRA_ARGS}
+
+          printf "%s" "${DEST}" > "$(results.image-url.path)"
+
+          echo ">> Image ${DEST} built and pushed"
