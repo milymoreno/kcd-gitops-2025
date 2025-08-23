@@ -79,6 +79,9 @@ df -h /  # Now 83% usage with 7.5GB free
 - ✅ **git-clone task** created and applied
 - ✅ **maven-build task** created and applied
 - ✅ **deploy-artifact task** created and applied
+- ✅ **junit-test task** created and applied
+- ✅ **sonarqube-analysis task** created and applied
+- ✅ **build-image task** created and applied
 - ✅ **All tasks verified** with `kubectl get tasks`
 
 **Tasks Created**:
@@ -88,7 +91,18 @@ df -h /  # Now 83% usage with 7.5GB free
 tekton-tasks/git-clone-task.yaml           # Clones Git repository
 tekton-tasks/maven-build-task.yaml         # Builds Java with Maven
 tekton-tasks/deploy-artifact-task.yaml     # Simulates deployment + creates K8s manifests
+tekton-tasks/junit-test-task.yaml          # Runs JUnit tests with Maven
+tekton-tasks/sonarqube-task.yaml           # Code quality analysis with SonarQube
+tekton-tasks/build-image-task.yaml         # Builds Docker images with Kaniko
 ```
+
+**🆕 NEW: Enhanced CI/CD Pipeline**
+
+The workshop now includes a complete enterprise-grade CI/CD pipeline with:
+- **Testing**: JUnit test execution and reporting
+- **Quality Gates**: SonarQube code analysis
+- **Container Building**: Docker image creation with Kaniko (no Docker daemon needed)
+- **GitOps Deployment**: ArgoCD automated deployment
 
 #### 7. Pipeline and ArgoCD Setup
 
@@ -124,6 +138,87 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443 &
 2. **CI Pipeline** → Tekton builds Java application  
 3. **GitOps CD** → ArgoCD deploys to Kubernetes
 4. **Monitoring** → Lens + ArgoCD Dashboard
+
+### 🔄 NEXT STEP: SonarQube Installation (Required for sonarqube-task.yaml)
+
+**The `sonarqube-task.yaml` requires SonarQube server running in the cluster.**
+
+#### Install SonarQube in K3s/Kubernetes:
+
+```bash
+# Create SonarQube namespace
+kubectl create namespace sonarqube
+
+# Install SonarQube using Helm
+helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
+helm repo update
+
+# Install SonarQube with persistent storage
+helm install sonarqube sonarqube/sonarqube \
+  --namespace sonarqube \
+  --set persistence.enabled=true \
+  --set persistence.size=10Gi \
+  --set service.type=ClusterIP
+
+# Wait for SonarQube to be ready
+kubectl wait --for=condition=Ready pod --all -n sonarqube --timeout=600s
+
+# Port forward to access SonarQube UI
+kubectl port-forward -n sonarqube svc/sonarqube-sonarqube 9000:9000
+
+# Access: http://localhost:9000
+# Default credentials: admin/admin (change on first login)
+```
+
+#### Alternative: SonarQube with kubectl (without Helm):
+
+```bash
+# Create SonarQube deployment
+kubectl apply -f - <<EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sonarqube
+  namespace: sonarqube
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarqube
+  template:
+    metadata:
+      labels:
+        app: sonarqube
+    spec:
+      containers:
+      - name: sonarqube
+        image: sonarqube:9.9-community
+        ports:
+        - containerPort: 9000
+        env:
+        - name: SONAR_ES_BOOTSTRAP_CHECKS_DISABLE
+          value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarqube
+  namespace: sonarqube
+spec:
+  selector:
+    app: sonarqube
+  ports:
+  - port: 9000
+    targetPort: 9000
+  type: ClusterIP
+EOF
+```
+
+#### Configure SonarQube for Tekton:
+
+1. **Create SonarQube project** and get authentication token
+2. **Update pipeline parameters** with SonarQube URL and token
+3. **Test the sonarqube-task** with your Java project
 
 ### 🎯 OPTIONAL NEXT STEPS
 

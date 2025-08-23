@@ -35,7 +35,7 @@ export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 
 ---
 
-### 3. Instalación de Tekton y ArgoCD
+### 3. Instalación de Tekton, ArgoCD y SonarQube
 
 **Tekton:**
 ```bash
@@ -49,14 +49,26 @@ kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 ```
 
+**SonarQube (para análisis de calidad):**
+```bash
+kubectl create namespace sonarqube
+helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
+helm install sonarqube sonarqube/sonarqube --namespace sonarqube
+```
+
 ---
 
 ### 4. Crear Tasks
 
-Se incluyen las Tasks:
-- `git-clone`
-- `maven-build-java-artifact-from-source`
-- `deploy-artifact-to-ibm-cloud-functions`
+Se incluyen **6 Tasks empresariales**:
+- `git-clone` - Clona repositorio Git
+- `maven-build-java-artifact-from-source` - Compila con Maven
+- `junit-test` - Ejecuta pruebas unitarias JUnit
+- `sonarqube-analysis` - Análisis de calidad de código
+- `build-image` - Construye imágenes Docker con Kaniko
+- `deploy-artifact-to-ibm-cloud-functions` - Despliega a Kubernetes
+
+**🆕 Pipeline CI/CD Completo**: Desde código fuente hasta despliegue con calidad garantizada
 
 ---
 
@@ -101,7 +113,11 @@ https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2
 
 ## 🎯 Resultados esperados
 
-- Montaje de clúster K3s funcional
-- CI/CD declarativo funcional con Tekton
-- GitOps completo con rollback usando ArgoCD
-- Aplicación Java desplegada desde PR
+- **Clúster K3s funcional** con todas las herramientas
+- **Pipeline CI/CD empresarial** con Tekton (6 tasks completas)
+- **Análisis de calidad** automático con SonarQube
+- **Construcción de imágenes** sin Docker daemon (Kaniko)
+- **GitOps completo** con rollback usando ArgoCD
+- **Aplicación Java desplegada** desde PR con calidad garantizada
+
+**🏆 Pipeline de nivel empresarial listo para producción**

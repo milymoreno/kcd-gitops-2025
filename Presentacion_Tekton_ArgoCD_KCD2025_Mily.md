@@ -249,16 +249,22 @@ kubectl port-forward svc/argocd-server -n argocd 8080:443
 
 ## 🧱 Crear Tasks y PipelineRun
 
-📌 **Tasks clave incluidas:**
+📌 **Tasks del pipeline CI/CD completo:**
 
 🔄 **git-clone**: clona el código desde GitHub  
 ⚙️ **maven-build-java-artifact-from-source**: compila el artefacto Java  
-🚀 **deploy-artifact-to-ibm-cloud-functions**: despliega a un servicio
+🧪 **junit-test**: ejecuta pruebas unitarias con Maven  
+🔍 **sonarqube-analysis**: análisis de calidad de código  
+🐳 **build-image**: construye imagen Docker con Kaniko  
+🚀 **deploy-artifact**: despliega y crea manifiestos K8s
 
 ```bash
-# Crear las tasks de Tekton
+# Crear todas las tasks de Tekton
 kubectl apply -f tekton-tasks/git-clone-task.yaml
 kubectl apply -f tekton-tasks/maven-build-task.yaml  
+kubectl apply -f tekton-tasks/junit-test-task.yaml
+kubectl apply -f tekton-tasks/sonarqube-task.yaml
+kubectl apply -f tekton-tasks/build-image-task.yaml
 kubectl apply -f tekton-tasks/deploy-artifact-task.yaml
 
 # Verificar que las tasks se crearon
@@ -268,7 +274,39 @@ kubectl get tasks
 📁 **Archivos creados:**
 - `tekton-tasks/git-clone-task.yaml` - Clona repositorio Git
 - `tekton-tasks/maven-build-task.yaml` - Compila con Maven
-- `tekton-tasks/deploy-artifact-task.yaml` - Simula despliegue y crea manifiestos K8s
+- `tekton-tasks/junit-test-task.yaml` - Ejecuta pruebas JUnit
+- `tekton-tasks/sonarqube-task.yaml` - Análisis de calidad con SonarQube
+- `tekton-tasks/build-image-task.yaml` - Construye imágenes con Kaniko
+- `tekton-tasks/deploy-artifact-task.yaml` - Despliega y crea manifiestos K8s
+
+🎯 **Pipeline empresarial completo**: Desde código fuente hasta despliegue con calidad garantizada
+
+---
+
+## 🔍 Instalación de SonarQube (Calidad de Código)
+
+**Para usar la task `sonarqube-analysis`, necesitas SonarQube en el cluster:**
+
+```bash
+# Crear namespace para SonarQube
+kubectl create namespace sonarqube
+
+# Instalar SonarQube con Helm
+helm repo add sonarqube https://SonarSource.github.io/helm-chart-sonarqube
+helm install sonarqube sonarqube/sonarqube --namespace sonarqube
+
+# Acceder a SonarQube UI
+kubectl port-forward -n sonarqube svc/sonarqube-sonarqube 9000:9000
+# http://localhost:9000 (admin/admin)
+```
+
+🎯 **¿Qué ganas con SonarQube?**
+
+🔍 **Análisis de calidad** automático en cada build  
+🐛 **Detección de bugs** y vulnerabilidades  
+📊 **Métricas de cobertura** de pruebas  
+🚫 **Quality Gates** que bloquean código defectuoso  
+📈 **Tendencias históricas** de calidad del proyecto
 
 ---
 
