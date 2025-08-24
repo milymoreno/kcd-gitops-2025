@@ -8,11 +8,6 @@ spec:
     - name: maven-image
       type: string
       default: maven:3.9-eclipse-temurin-17
-    - name: maven-args
-      type: array
-      default:
-        - "-B"
-        - "test"
   workspaces:
     - name: source
       description: Código fuente de la aplicación (clonado previamente)
@@ -29,6 +24,6 @@ spec:
         #!/usr/bin/env bash
         set -euo pipefail
         echo ">> Running Maven tests..."
-        mvn ${params.maven-args}
-        echo -n "OK" > "${results.test-result.path}"
-        echo -n "${workspaces.source.path}/target/surefire-reports" > "${results.report-path.path}"
+        mvn -B test
+        echo -n "OK" > "$(results.test-result.path)"
+        echo -n "$(workspaces.source.path)/target/surefire-reports" > "$(results.report-path.path)"
