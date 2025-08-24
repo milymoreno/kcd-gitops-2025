@@ -1,0 +1,49 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: copy-jar-artifact
+  namespace: default
+spec:
+  description: Copy JAR artifact to deployment directory
+  params:
+    - name: app-name
+      type: string
+      description: Application name
+      default: "demo-app"
+  workspaces:
+    - name: source
+      description: Workspace containing the source code
+  steps:
+    - name: copy-jar
+      image: registry.access.redhat.com/ubi8/ubi-minimal:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        
+        echo "🔍 Looking for JAR files..."
+        find . -name "*.jar" -type f
+        
+        echo "📦 Copying JAR artifacts..."
+        
+        # Create deployment directory
+        mkdir -p deployment/
+        
+        # Find and copy JAR files
+        JAR_FILE=$(find target/ -name "*.jar" -not -name "*-sources.jar" | head -1)
+        
+        if [ -n "$JAR_FILE" ]; then
+          echo "✅ Found JAR: $JAR_FILE"
+          cp "$JAR_FILE" "deployment/$(params.app-name).jar"
+          echo "📋 JAR copied to deployment/$(params.app-name).jar"
+          
+          # Show file info
+          ls -la deployment/
+        else
+          echo "❌ No JAR file found in target/ directory"
+          echo "📁 Contents of target/:"
+          ls -la target/ || echo "target/ directory not found"
+          exit 1
+        fi
+        
+        echo "✅ JAR artifact copy completed successfully!"

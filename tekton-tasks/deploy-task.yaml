@@ -1,0 +1,26 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: deploy-artifact-to-ibm-cloud-functions
+spec:
+  description: Deploy artifact (demo simulation)
+  params:
+  - name: APP_NAME
+    description: Application name
+    type: string
+  - name: ENVIRONMENT
+    description: Target environment
+    type: string
+  workspaces:
+  - name: source
+    description: The workspace containing the source code
+  steps:
+  - name: deploy
+    image: alpine:latest
+    script: |
+      #!/bin/sh
+      echo "🚀 Deploying $(params.APP_NAME) to $(params.ENVIRONMENT) environment..."
+      echo "📦 Artifact location: $(workspaces.source.path)/deployment/"
+      ls -la $(workspaces.source.path)/deployment/ || echo "No deployment directory found"
+      echo "✅ Deployment simulation completed successfully!"
+      echo "🌐 App URL: https://$(params.APP_NAME)-$(params.ENVIRONMENT).example.com"

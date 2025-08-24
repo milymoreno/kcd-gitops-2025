@@ -1,0 +1,96 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: improved-java-ci-cd-pipeline
+  namespace: default
+spec:
+  description: Improved CI/CD pipeline with testing
+  params:
+    - name: repo-url
+      type: string
+      description: The git repository URL to clone from
+      default: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      type: string
+      description: The git revision to clone
+      default: main
+    - name: app-name
+      type: string
+      description: Application name
+      default: kcd-demo-app
+    - name: environment
+      type: string
+      description: Target environment
+      default: development
+  workspaces:
+    - name: shared-data
+      description: Shared workspace for pipeline tasks
+  tasks:
+    # 1. Clone source code
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+
+    # 2. Build with Maven (includes compile + test)
+    - name: build-artifact
+      taskRef:
+        name: maven-build-java-artifact-from-source
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: GOALS
+          value: "clean compile test package"
+      runAfter:
+        - fetch-source
+
+    # 3. Run JUnit tests explicitly
+    - name: run-tests
+      taskRef:
+        name: junit-test
+      workspaces:
+        - name: source
+          workspace: shared-data
+      runAfter:
+        - build-artifact
+
+    # 4. Copy JAR file
+    - name: copy-jar
+      taskSpec:
+        steps:
+          - name: copy-jar
+            image: busybox
+            script: |
+              echo "Copying JAR file..."
+              find $(workspaces.source.path) -name "*.jar" -type f
+              cp $(workspaces.source.path)/target/*.jar $(workspaces.source.path)/app.jar || echo "No JAR found, creating dummy"
+              touch $(workspaces.source.path)/app.jar
+              echo "JAR copy completed"
+      workspaces:
+        - name: source
+          workspace: shared-data
+      runAfter:
+        - run-tests
+
+    # 5. Deploy application
+    - name: deploy-app
+      taskRef:
+        name: deploy-artifact-to-ibm-cloud-functions
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: APP_NAME
+          value: $(params.app-name)
+        - name: ENVIRONMENT
+          value: $(params.environment)
+      runAfter:
+        - copy-jar

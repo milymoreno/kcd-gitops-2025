@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: java-ci-cd-pipeline-run-v4
+  namespace: default
+spec:
+  pipelineRef:
+    name: java-ci-cd-pipeline
+  params:
+    - name: repo-url
+      value: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      value: main
+    - name: app-name
+      value: demo-java-app
+    - name: environment
+      value: development
+  workspaces:
+    - name: shared-data
+      persistentVolumeClaim:
+        claimName: tekton-clean-pvc

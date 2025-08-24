@@ -40,13 +40,13 @@ spec:
 
     - name: build-artifact
       taskRef:
-        name: maven-build-java-artifact-from-source
+        name: maven
       workspaces:
         - name: source
           workspace: shared-data
       params:
         - name: GOALS
-          value: "clean compile test package"
+          value: ["clean", "compile", "test", "package"]
       runAfter:
         - fetch-source
 

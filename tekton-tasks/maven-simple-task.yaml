@@ -1,0 +1,31 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: maven-simple
+spec:
+  description: Simple Maven build task for demo
+  params:
+  - name: GOALS
+    description: Maven goals to run
+    type: array
+    default: ["package"]
+  workspaces:
+  - name: source
+    description: The workspace containing the source code
+  steps:
+  - name: maven-build
+    image: maven:3.8.6-openjdk-11
+    workingDir: $(workspaces.source.path)
+    args: ["$(params.GOALS[*])"]
+    script: |
+      #!/bin/bash
+      echo "🔨 Running Maven build..."
+      echo "Goals: $@"
+      
+      if [ -f pom.xml ]; then
+        mvn "$@"
+        echo "✅ Maven build completed successfully"
+      else
+        echo "❌ No pom.xml found in workspace"
+        exit 1
+      fi

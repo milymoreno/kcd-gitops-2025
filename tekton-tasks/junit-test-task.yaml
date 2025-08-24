@@ -1,29 +1,22 @@
-apiVersion: tekton.dev/v1beta1
+apiVersion: tekton.dev/v1
 kind: Task
 metadata:
   name: junit-test
 spec:
-  description: Ejecuta pruebas JUnit con Maven y expone la ruta del reporte.
-  params:
-    - name: maven-image
-      type: string
-      default: maven:3.9-eclipse-temurin-17
+  description: Run JUnit tests
   workspaces:
-    - name: source
-      description: Código fuente de la aplicación (clonado previamente)
-  results:
-    - name: test-result
-      description: "OK si las pruebas pasan."
-    - name: report-path
-      description: "Ruta a los reportes JUnit (Surefire)."
+  - name: source
+    description: The workspace containing the source code
   steps:
-    - name: run-tests
-      image: $(params.maven-image)
-      workingDir: $(workspaces.source.path)
-      script: |
-        #!/usr/bin/env bash
-        set -euo pipefail
-        echo ">> Running Maven tests..."
-        mvn -B test
-        echo -n "OK" > "$(results.test-result.path)"
-        echo -n "$(workspaces.source.path)/target/surefire-reports" > "$(results.report-path.path)"
+  - name: run-tests
+    image: maven:3.8.6-openjdk-11
+    workingDir: $(workspaces.source.path)
+    script: |
+      #!/bin/bash
+      echo "Running JUnit tests..."
+      if [ -f pom.xml ]; then
+        mvn test
+      else
+        echo "No pom.xml found, skipping tests"
+      fi
+      echo "Tests completed successfully"

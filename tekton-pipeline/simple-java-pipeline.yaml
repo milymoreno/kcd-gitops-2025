@@ -1,0 +1,61 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: simple-java-pipeline
+  namespace: default
+spec:
+  description: Simple working Java CI/CD pipeline
+  params:
+    - name: repo-url
+      type: string
+      description: The git repository URL to clone from
+      default: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      type: string
+      description: The git revision to clone
+      default: main
+  workspaces:
+    - name: shared-data
+      description: Shared workspace for pipeline tasks
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+
+    - name: build-app
+      taskRef:
+        name: maven-simple
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: GOALS
+          value: ["clean", "compile", "test", "package"]
+      runAfter:
+        - fetch-source
+
+    - name: copy-jar
+      taskSpec:
+        steps:
+          - name: copy-jar
+            image: busybox
+            script: |
+              echo "📦 Copying JAR file..."
+              ls -la $(workspaces.source.path)/target/
+              # Copy the main JAR file (not the original one)
+              cp $(workspaces.source.path)/target/hello-tekton.jar $(workspaces.source.path)/app.jar
+              echo "✅ JAR copied successfully"
+              ls -la $(workspaces.source.path)/app.jar
+      workspaces:
+        - name: source
+          workspace: shared-data
+      runAfter:
+        - build-app

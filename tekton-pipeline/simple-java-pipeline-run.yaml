@@ -1,0 +1,17 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: simple-java-pipeline-run-success
+  namespace: default
+spec:
+  pipelineRef:
+    name: simple-java-pipeline
+  params:
+    - name: repo-url
+      value: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      value: main
+  workspaces:
+    - name: shared-data
+      persistentVolumeClaim:
+        claimName: tekton-super-fresh-pvc

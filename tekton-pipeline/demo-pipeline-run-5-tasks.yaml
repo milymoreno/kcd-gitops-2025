@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: demo-pipeline-run-5-tasks
+  namespace: default
+spec:
+  pipelineRef:
+    name: demo-java-pipeline-5-tasks
+  params:
+    - name: repo-url
+      value: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      value: main
+    - name: app-name
+      value: kcd-demo-app
+    - name: environment
+      value: development
+  workspaces:
+    - name: shared-data
+      persistentVolumeClaim:
+        claimName: tekton-shared-pvc

@@ -1,0 +1,110 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: complete-java-pipeline
+  namespace: default
+spec:
+  description: Complete Java CI/CD pipeline with SonarQube, Docker build, and deployment
+  params:
+    - name: repo-url
+      type: string
+      description: The git repository URL to clone from
+      default: "https://github.com/milymoreno/creating-cicd-pipelines-with-tekton-2"
+    - name: revision
+      type: string
+      description: The git revision to clone
+      default: main
+    - name: image-name
+      type: string
+      description: Container image name
+      default: "demo-java-app"
+    - name: image-tag
+      type: string
+      description: Container image tag
+      default: "latest"
+  workspaces:
+    - name: shared-data
+      description: Shared workspace for pipeline tasks
+  tasks:
+    # 1. Clone source code
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-data
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+
+    # 2. Build and test with Maven
+    - name: build-and-test
+      taskRef:
+        name: maven-simple
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: GOALS
+          value: ["clean", "compile", "test", "package"]
+      runAfter:
+        - fetch-source
+
+    # 3. Run JUnit tests
+    - name: junit-tests
+      taskRef:
+        name: junit-test
+      workspaces:
+        - name: source
+          workspace: shared-data
+      runAfter:
+        - build-and-test
+
+    # 4. SonarQube analysis
+    - name: sonarqube-analysis
+      taskRef:
+        name: sonarqube-analysis
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: SONAR_HOST_URL
+          value: "http://sonarqube.sonarqube.svc.cluster.local:9000"
+        - name: SONAR_PROJECT_KEY
+          value: "demo-java-app"
+      runAfter:
+        - junit-tests
+
+    # 5. Build Docker image
+    - name: build-image
+      taskRef:
+        name: build-image
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: IMAGE_NAME
+          value: $(params.image-name)
+        - name: IMAGE_TAG
+          value: $(params.image-tag)
+        - name: DOCKERFILE_PATH
+          value: "./Dockerfile"
+      runAfter:
+        - sonarqube-analysis
+
+    # 6. Deploy to Kubernetes
+    - name: deploy-app
+      taskRef:
+        name: deploy-artifact-to-ibm-cloud-functions
+      workspaces:
+        - name: source
+          workspace: shared-data
+      params:
+        - name: APP_NAME
+          value: $(params.image-name)
+        - name: ENVIRONMENT
+          value: "development"
+      runAfter:
+        - build-image
